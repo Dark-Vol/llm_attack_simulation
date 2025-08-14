@@ -1,0 +1,47 @@
+# Конфигурация для симуляции атак LLM
+
+# Настройки логирования
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/simulation.log"
+  max_size: "10MB"
+  backup_count: 5
+  console_output: true
+
+# Настройки атак
+attack:
+  phishing:
+    max_length: 1000
+    suspicious_keywords_file: "data/suspicious_keywords.txt"
+    email_templates_file: "data/email_templates.txt"
+    generation_timeout: 30
+  scanner:
+    scan_interval: 60
+    max_concurrent_scans: 10
+
+# Настройки защиты
+defense:
+  detector:
+    confidence_threshold: 0.8
+    model_path: "models/detector.pkl"
+    suspicious_patterns_file: "data/suspicious_patterns.txt"
+  analyzer:
+    analysis_depth: "deep"  # quick, standard, deep
+    report_format: "json"   # json, html, pdf
+
+# Настройки симуляции
+simulation:
+  network:
+    max_nodes: 100
+    connection_timeout: 30
+    retry_attempts: 3
+  events:
+    max_events_per_second: 100
+    event_queue_size: 1000
+
+# Настройки тестирования
+testing:
+  coverage_threshold: 80
+  test_timeout: 300
+  parallel_tests: true

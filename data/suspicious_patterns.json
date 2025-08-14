@@ -1,0 +1,92 @@
+[
+  {
+    "name": "urgent_action",
+    "pattern": "\\b(urgent|immediate|critical|asap|now)\\b",
+    "weight": 0.3,
+    "description": "Срочные действия"
+  },
+  {
+    "name": "password_reset",
+    "pattern": "\\b(password|reset|change|update)\\b",
+    "weight": 0.4,
+    "description": "Сброс пароля"
+  },
+  {
+    "name": "account_verification",
+    "pattern": "\\b(verify|confirm|validate|check)\\s+(account|email|identity)\\b",
+    "weight": 0.5,
+    "description": "Проверка аккаунта"
+  },
+  {
+    "name": "suspicious_links",
+    "pattern": "https?://[^\\s]+",
+    "weight": 0.6,
+    "description": "Подозрительные ссылки"
+  },
+  {
+    "name": "personal_info_request",
+    "pattern": "\\b(ssn|credit\\s+card|bank\\s+account|social\\s+security)\\b",
+    "weight": 0.8,
+    "description": "Запрос личной информации"
+  },
+  {
+    "name": "account_status",
+    "pattern": "\\b(compromised|suspended|locked|flagged|at\\s+risk)\\b",
+    "weight": 0.7,
+    "description": "Статус аккаунта"
+  },
+  {
+    "name": "security_alerts",
+    "pattern": "\\b(security\\s+alert|breach|threat|warning|danger)\\b",
+    "weight": 0.6,
+    "description": "Сигналы безопасности"
+  },
+  {
+    "name": "action_required",
+    "pattern": "\\b(action\\s+required|immediate\\s+action|urgent\\s+action)\\b",
+    "weight": 0.5,
+    "description": "Требуемые действия"
+  },
+  {
+    "name": "time_pressure",
+    "pattern": "\\b(limited\\s+time|expires|deadline|countdown)\\b",
+    "weight": 0.4,
+    "description": "Давление времени"
+  },
+  {
+    "name": "financial_terms",
+    "pattern": "\\b(payment|billing|invoice|refund|balance|overdue)\\b",
+    "weight": 0.5,
+    "description": "Финансовые термины"
+  },
+  {
+    "name": "government_authority",
+    "pattern": "\\b(irs|fbi|cia|nsa|government|official|authority)\\b",
+    "weight": 0.7,
+    "description": "Государственные органы"
+  },
+  {
+    "name": "click_here",
+    "pattern": "\\b(click\\s+here|click\\s+now|click\\s+to)\\b",
+    "weight": 0.4,
+    "description": "Призывы к действию"
+  },
+  {
+    "name": "free_offers",
+    "pattern": "\\b(free|discount|bonus|reward|prize|lottery)\\b",
+    "weight": 0.3,
+    "description": "Бесплатные предложения"
+  },
+  {
+    "name": "inheritance_scam",
+    "pattern": "\\b(inheritance|unclaimed|money|fortune|wealth)\\b",
+    "weight": 0.6,
+    "description": "Мошенничество с наследством"
+  },
+  {
+    "name": "technical_support",
+    "pattern": "\\b(technical\\s+support|help|assistance|support\\s+team)\\b",
+    "weight": 0.4,
+    "description": "Техническая поддержка"
+  }
+]

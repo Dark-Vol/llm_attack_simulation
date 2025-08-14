@@ -1,0 +1,20 @@
+Your account has been compromised. Click here to verify: {link}
+Urgent: Password reset required. {link}
+Security alert: Unusual activity detected. {link}
+Account suspended. Reactivate now: {link}
+Important: Verify your identity immediately. {link}
+Critical: Your account needs attention. {link}
+Action required: Update your information. {link}
+Warning: Suspicious login attempt detected. {link}
+Alert: Your account has been locked. {link}
+Notice: Security verification needed. {link}
+Your account will be deleted unless you verify: {link}
+Immediate action required: Confirm your details. {link}
+Security breach detected. Secure your account: {link}
+Your password has expired. Reset now: {link}
+Account verification pending. Complete here: {link}
+Suspicious activity on your account. Review: {link}
+Your account has been flagged. Resolve: {link}
+Security update required. Click here: {link}
+Your account is at risk. Protect it: {link}
+Verification failed. Try again: {link}
