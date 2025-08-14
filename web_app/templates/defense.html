@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}Защита от угроз{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-shield-alt text-success"></i>
+                    Защита от угроз
+                </h1>
+                <div>
+                    <button class="btn btn-outline-primary" onclick="refreshDefenseStats()">
+                        <i class="fas fa-sync-alt"></i> Обновить
+                    </button>
+                    <button class="btn btn-success" onclick="testDetector()">
+                        <i class="fas fa-play"></i> Тест детектора
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика защиты -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <i class="fas fa-eye fa-2x text-success mb-2"></i>
+                    <h5 class="card-title">Всего проверок</h5>
+                    <h3 class="text-success" id="total-checks">{{ stats.get('total_checks', 0) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                    <h5 class="card-title">Обнаружено угроз</h5>
+                    <h3 class="text-warning" id="threats-detected">{{ stats.get('threats_detected', 0) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <i class="fas fa-percentage fa-2x text-info mb-2"></i>
+                    <h5 class="card-title">Точность</h5>
+                    <h3 class="text-info" id="accuracy">{{ "%.1f"|format(stats.get('accuracy', 0) * 100) }}%</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x text-primary mb-2"></i>
+                    <h5 class="card-title">Среднее время</h5>
+                    <h3 class="text-primary" id="avg-time">{{ "%.2f"|format(stats.get('avg_detection_time', 0)) }}с</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Тестирование детектора -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-vial"></i>
+                        Тестирование детектора угроз
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="test-text" class="form-label">Текст для проверки:</label>
+                                <textarea class="form-control" id="test-text" rows="4" 
+                                          placeholder="Введите текст для проверки на наличие угроз..."></textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="analyzeText()">
+                                <i class="fas fa-search"></i> Анализировать
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <div id="analysis-result" style="display: none;">
+                                <h6>Результат анализа:</h6>
+                                <div class="alert" id="result-alert">
+                                    <div id="result-content"></div>
+                                </div>
+                                <div id="confidence-bar" class="mt-2">
+                                    <label>Уровень угрозы:</label>
+                                    <div class="progress">
+                                        <div class="progress-bar" id="confidence-progress" 
+                                             role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                    <small class="text-muted" id="confidence-text">0%</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Паттерны угроз -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i>
+                        Паттерны угроз ({{ patterns|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Паттерн</th>
+                                    <th>Описание</th>
+                                    <th>Вес</th>
+                                    <th>Тип</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pattern in patterns %}
+                                <tr>
+                                    <td>
+                                        <code class="text-danger">{{ pattern.pattern }}</code>
+                                    </td>
+                                    <td>{{ pattern.description }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if pattern.weight > 0.7 else 'warning' if pattern.weight > 0.4 else 'info' }}">
+                                            {{ "%.2f"|format(pattern.weight) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ pattern.type }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Графики -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie"></i>
+                        Распределение типов угроз
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="threatTypesChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line"></i>
+                        Время детекции по дням
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="detectionTimeChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для детального анализа -->
+<div class="modal fade" id="analysisModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-search-plus"></i>
+                    Детальный анализ
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modal-analysis-content">
+                <!-- Содержимое будет загружено динамически -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Инициализация графиков
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+});
+
+function initializeCharts() {
+    // График типов угроз
+    const threatTypesCtx = document.getElementById('threatTypesChart').getContext('2d');
+    new Chart(threatTypesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Фишинг', 'Вредоносные ссылки', 'Подозрительные слова', 'Другие'],
+            datasets: [{
+                data: [30, 25, 35, 10],
+                backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#6c757d']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // График времени детекции
+    const detectionTimeCtx = document.getElementById('detectionTimeChart').getContext('2d');
+    new Chart(detectionTimeCtx, {
+        type: 'line',
+        data: {
+            labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+            datasets: [{
+                label: 'Среднее время (мс)',
+                data: [120, 95, 150, 80, 200, 110, 90],
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function analyzeText() {
+    const text = document.getElementById('test-text').value.trim();
+    if (!text) {
+        showNotification('Введите текст для анализа', 'warning');
+        return;
+    }
+
+    showLoading('Анализируем текст...');
+    
+    // Имитация анализа (в реальном приложении здесь будет API вызов)
+    setTimeout(() => {
+        const result = simulateAnalysis(text);
+        displayAnalysisResult(result);
+        hideLoading();
+    }, 1000);
+}
+
+function simulateAnalysis(text) {
+    // Простая имитация анализа
+    const suspiciousWords = ['password', 'verify', 'account', 'urgent', 'click', 'login'];
+    const foundWords = suspiciousWords.filter(word => 
+        text.toLowerCase().includes(word.toLowerCase())
+    );
+    
+    const confidence = Math.min(0.9, foundWords.length * 0.15 + Math.random() * 0.3);
+    const isThreat = confidence > 0.5;
+    
+    return {
+        isThreat: isThreat,
+        confidence: confidence,
+        foundPatterns: foundWords.map(word => ({
+            pattern: word,
+            description: `Найдено подозрительное слово: ${word}`,
+            weight: 0.15
+        })),
+        recommendations: isThreat ? [
+            'Блокировать сообщение',
+            'Отправить в карантин',
+            'Уведомить администратора'
+        ] : [
+            'Сообщение безопасно',
+            'Можно доставить получателю'
+        ]
+    };
+}
+
+function displayAnalysisResult(result) {
+    const resultDiv = document.getElementById('analysis-result');
+    const resultAlert = document.getElementById('result-alert');
+    const resultContent = document.getElementById('result-content');
+    const confidenceProgress = document.getElementById('confidence-progress');
+    const confidenceText = document.getElementById('confidence-text');
+    
+    // Настройка алерта
+    if (result.isThreat) {
+        resultAlert.className = 'alert alert-danger';
+        resultAlert.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <strong>УГРОЗА ОБНАРУЖЕНА!</strong>';
+    } else {
+        resultAlert.className = 'alert alert-success';
+        resultAlert.innerHTML = '<i class="fas fa-check-circle"></i> <strong>Угроз не обнаружено</strong>';
+    }
+    
+    // Отображение найденных паттернов
+    let patternsHtml = '<h6>Найденные паттерны:</h6><ul>';
+    result.foundPatterns.forEach(pattern => {
+        patternsHtml += `<li><code>${pattern.pattern}</code> - ${pattern.description}</li>`;
+    });
+    patternsHtml += '</ul>';
+    
+    // Рекомендации
+    let recommendationsHtml = '<h6>Рекомендации:</h6><ul>';
+    result.recommendations.forEach(rec => {
+        recommendationsHtml += `<li>${rec}</li>`;
+    });
+    recommendationsHtml += '</ul>';
+    
+    resultContent.innerHTML = patternsHtml + recommendationsHtml;
+    
+    // Прогресс-бар
+    const confidencePercent = Math.round(result.confidence * 100);
+    confidenceProgress.style.width = confidencePercent + '%';
+    confidenceProgress.className = `progress-bar bg-${result.isThreat ? 'danger' : 'success'}`;
+    confidenceText.textContent = confidencePercent + '%';
+    
+    resultDiv.style.display = 'block';
+}
+
+function testDetector() {
+    // Запуск тестового режима детектора
+    showNotification('Запуск тестового режима детектора...', 'info');
+    
+    // Здесь можно добавить реальную логику тестирования
+    setTimeout(() => {
+        showNotification('Тестовый режим завершен. Проверьте логи для деталей.', 'success');
+    }, 2000);
+}
+
+function refreshDefenseStats() {
+    showLoading('Обновляем статистику...');
+    
+    // Имитация обновления данных
+    setTimeout(() => {
+        // Обновляем счетчики
+        document.getElementById('total-checks').textContent = 
+            Math.floor(Math.random() * 1000) + 500;
+        document.getElementById('threats-detected').textContent = 
+            Math.floor(Math.random() * 100) + 50;
+        
+        hideLoading();
+        showNotification('Статистика обновлена', 'success');
+    }, 1000);
+}
+</script>
+{% endblock %}

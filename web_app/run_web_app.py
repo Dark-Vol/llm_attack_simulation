@@ -54,10 +54,12 @@ def create_directories():
     project_root = Path(__file__).parent.parent
     sys.path.insert(0, str(project_root))
     
+    # Создаем директории в корне проекта
     directories = ['logs', 'models', 'data']
     
     for directory in directories:
-        Path(directory).mkdir(exist_ok=True)
+        dir_path = project_root / directory
+        dir_path.mkdir(exist_ok=True)
         print(f"✅ {directory}/")
     
     print()
@@ -67,8 +69,23 @@ def start_web_app():
     print("🚀 Запуск веб-приложения...")
     
     try:
+        # Переходим в корень проекта для корректной работы с конфигурацией
+        project_root = Path(__file__).parent.parent
+        os.chdir(project_root)
+        
+        print(f"📁 Рабочая директория: {os.getcwd()}")
+        print(f"📁 Путь к конфигурации: {project_root / 'config' / 'config.yaml'}")
+        
+        # Проверяем наличие конфигурации
+        config_file = project_root / 'config' / 'config.yaml'
+        if not config_file.exists():
+            print(f"❌ Файл конфигурации не найден: {config_file}")
+            return False
+        
+        print("✅ Конфигурация найдена")
+        
         # Импортируем и запускаем приложение
-        from app import app
+        from web_app.app import app
         
         print("✅ Веб-приложение инициализировано успешно")
         print("🌐 Открытие в браузере...")
@@ -87,6 +104,8 @@ def start_web_app():
         
     except Exception as e:
         print(f"❌ Ошибка при запуске веб-приложения: {e}")
+        import traceback
+        traceback.print_exc()
         return False
     
     return True

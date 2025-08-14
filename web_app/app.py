@@ -11,14 +11,25 @@ import time
 from datetime import datetime
 
 # Добавляем путь к основному проекту
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(project_root)
 
-from main import LLMAttackSimulator
-from attack.phishing_generator import PhishingGenerator
-from defense.detector import ThreatDetector
-from simulation.network import NetworkSimulator
-from utils.config_manager import config_manager
-from utils.logger import main_logger
+# Устанавливаем рабочую директорию на корень проекта
+os.chdir(project_root)
+
+# Импортируем компоненты после установки путей
+try:
+    from main import LLMAttackSimulator
+    from attack.phishing_generator import PhishingGenerator
+    from defense.detector import ThreatDetector
+    from simulation.network import NetworkSimulator
+    from utils.config_manager import config_manager
+    from utils.logger import main_logger
+except ImportError as e:
+    print(f"Ошибка импорта: {e}")
+    print(f"Текущая директория: {os.getcwd()}")
+    print(f"Python path: {sys.path}")
+    raise
 
 app = Flask(__name__)
 app.secret_key = 'llm_attack_sim_secret_key_2024'
@@ -44,6 +55,12 @@ def initialize_components():
         main_logger.log_event("WEB_APP_ERROR", f"Failed to initialize components: {e}", level="ERROR")
         return False
 
+# Инициализируем компоненты при запуске
+with app.app_context():
+    if not initialize_components():
+        print("⚠️  Предупреждение: Не удалось инициализировать все компоненты")
+        print("Веб-приложение будет работать с ограниченной функциональностью")
+
 @app.route('/')
 def index():
     """Главная страница"""
@@ -53,6 +70,15 @@ def index():
 def dashboard():
     """Панель управления"""
     try:
+        # Проверяем инициализацию компонентов
+        if not all([phishing_generator, threat_detector, network_simulator]):
+            flash('Компоненты симуляции не инициализированы. Перезапустите приложение.', 'warning')
+            return render_template('dashboard.html', 
+                                 attack_stats={}, 
+                                 defense_stats={}, 
+                                 network_stats={}, 
+                                 config={})
+        
         # Получаем статистику
         attack_stats = phishing_generator.get_generation_stats() if phishing_generator else {}
         defense_stats = threat_detector.get_detection_stats() if threat_detector else {}
@@ -88,6 +114,11 @@ def simulation():
 def attack():
     """Страница атак"""
     try:
+        # Проверяем инициализацию компонентов
+        if not phishing_generator:
+            flash('Генератор фишинга не инициализирован. Перезапустите приложение.', 'warning')
+            return render_template('attack.html', keywords=[], templates=[], stats={})
+        
         # Получаем подозрительные ключевые слова
         keywords = phishing_generator.suspicious_keywords if phishing_generator else []
         templates = phishing_generator.email_templates if phishing_generator else []
@@ -104,6 +135,11 @@ def attack():
 def defense():
     """Страница защиты"""
     try:
+        # Проверяем инициализацию компонентов
+        if not threat_detector:
+            flash('Детектор угроз не инициализирован. Перезапустите приложение.', 'warning')
+            return render_template('defense.html', patterns=[], stats={})
+        
         # Получаем паттерны угроз
         patterns = threat_detector.suspicious_patterns if threat_detector else []
         
@@ -118,6 +154,11 @@ def defense():
 def network():
     """Страница сети"""
     try:
+        # Проверяем инициализацию компонентов
+        if not network_simulator:
+            flash('Симулятор сети не инициализирован. Перезапустите приложение.', 'warning')
+            return render_template('network.html', stats={})
+        
         network_stats = network_simulator.get_network_stats() if network_simulator else {}
         return render_template('network.html', stats=network_stats)
     except Exception as e:
@@ -128,6 +169,11 @@ def network():
 def logs():
     """Страница логов"""
     try:
+        # Проверяем инициализацию компонентов
+        if not config_manager:
+            flash('Менеджер конфигурации не инициализирован. Перезапустите приложение.', 'warning')
+            return render_template('logs.html', logs=[])
+        
         # Читаем последние логи
         log_file = config_manager.get('logging.file', 'logs/simulation.log')
         logs = []
@@ -147,6 +193,11 @@ def logs():
 def config_page():
     """Страница конфигурации"""
     try:
+        # Проверяем инициализацию компонентов
+        if not config_manager:
+            flash('Менеджер конфигурации не инициализирован. Перезапустите приложение.', 'warning')
+            return render_template('config.html', config={})
+        
         config = {
             'logging': config_manager.get_logging_config(),
             'attack': config_manager.get_attack_config(),
@@ -172,7 +223,8 @@ def api_run_simulation():
         
         results = simulator.run_simulation(num_attacks=num_attacks)
         
-        main_logger.log_event("WEB_SIMULATION", f"Web simulation run with {num_attacks} attacks", level="INFO")
+        if main_logger:
+            main_logger.log_event("WEB_SIMULATION", f"Web simulation run with {num_attacks} attacks", level="INFO")
         
         return jsonify({
             'success': True,
@@ -180,7 +232,8 @@ def api_run_simulation():
             'timestamp': datetime.now().isoformat()
         })
     except Exception as e:
-        main_logger.log_event("WEB_SIMULATION_ERROR", f"Web simulation failed: {e}", level="ERROR")
+        if main_logger:
+            main_logger.log_event("WEB_SIMULATION_ERROR", f"Web simulation failed: {e}", level="ERROR")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/generate_phishing', methods=['POST'])
@@ -300,21 +353,43 @@ def api_reset_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.errorhandler(404)
-def not_found(error):
-    """Обработчик 404 ошибки"""
-    return render_template('404.html'), 404
+@app.route('/health')
+def health_check():
+    """Проверка состояния компонентов"""
+    components_status = {
+        'simulator': simulator is not None,
+        'phishing_generator': phishing_generator is not None,
+        'threat_detector': threat_detector is not None,
+        'network_simulator': network_simulator is not None,
+        'config_manager': 'config_manager' in globals(),
+        'main_logger': 'main_logger' in globals()
+    }
+    
+    all_healthy = all(components_status.values())
+    
+    return jsonify({
+        'status': 'healthy' if all_healthy else 'degraded',
+        'components': components_status,
+        'timestamp': datetime.now().isoformat()
+    })
 
 @app.errorhandler(500)
 def internal_error(error):
-    """Обработчик 500 ошибки"""
+    """Обработчик внутренних ошибок сервера"""
     return render_template('500.html'), 500
+
+@app.errorhandler(404)
+def not_found_error(error):
+    """Обработчик ошибок 404"""
+    return render_template('404.html'), 404
 
 if __name__ == '__main__':
     # Инициализируем компоненты
     if initialize_components():
-        print("✅ Веб-приложение инициализировано успешно")
-        app.run(debug=True, host='0.0.0.0', port=5000)
+        print("✅ Все компоненты инициализированы успешно")
     else:
-        print("❌ Ошибка инициализации веб-приложения")
-        sys.exit(1)
+        print("⚠️  Некоторые компоненты не инициализированы")
+        print("Веб-приложение будет работать с ограниченной функциональностью")
+    
+    print("🌐 Запуск веб-приложения на http://localhost:5000")
+    app.run(debug=True, host='0.0.0.0', port=5000)

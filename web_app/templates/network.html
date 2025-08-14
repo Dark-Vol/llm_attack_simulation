@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+
+{% block title %}Сеть и симуляция{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-network-wired text-primary"></i>
+                    Сеть и симуляция
+                </h1>
+                <div>
+                    <button class="btn btn-outline-primary" onclick="refreshNetworkStats()">
+                        <i class="fas fa-sync-alt"></i> Обновить
+                    </button>
+                    <button class="btn btn-success" onclick="createNetwork()">
+                        <i class="fas fa-plus"></i> Создать сеть
+                    </button>
+                    <button class="btn btn-warning" onclick="simulateAttack()">
+                        <i class="fas fa-bomb"></i> Симуляция атаки
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Статистика сети -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <i class="fas fa-server fa-2x text-primary mb-2"></i>
+                    <h5 class="card-title">Всего узлов</h5>
+                    <h3 class="text-primary" id="total-nodes">{{ stats.get('total_nodes', 0) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-danger">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                    <h5 class="card-title">Скомпрометировано</h5>
+                    <h3 class="text-danger" id="compromised-nodes">{{ stats.get('compromised_nodes', 0) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
+                    <h5 class="card-title">Целостность сети</h5>
+                    <h3 class="text-warning" id="network-integrity">{{ "%.1f"|format(stats.get('network_integrity', 1.0) * 100) }}%</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <i class="fas fa-crosshairs fa-2x text-info mb-2"></i>
+                    <h5 class="card-title">Всего атак</h5>
+                    <h3 class="text-info" id="total-attacks">{{ stats.get('total_attacks', 0) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Управление сетью -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs"></i>
+                        Управление сетью
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="network-size" class="form-label">Количество узлов:</label>
+                        <input type="number" class="form-control" id="network-size" value="10" min="1" max="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="node-types" class="form-label">Типы узлов:</label>
+                        <select class="form-select" id="node-types" multiple>
+                            <option value="user" selected>Пользователи</option>
+                            <option value="server" selected>Серверы</option>
+                            <option value="router" selected>Маршрутизаторы</option>
+                            <option value="database" selected>Базы данных</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="createCustomNetwork()">
+                        <i class="fas fa-magic"></i> Создать сеть
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bomb"></i>
+                        Симуляция атак
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="attack-type" class="form-label">Тип атаки:</label>
+                        <select class="form-select" id="attack-type">
+                            <option value="phishing">Фишинг</option>
+                            <option value="malware">Вредоносное ПО</option>
+                            <option value="ddos">DDoS</option>
+                            <option value="sql_injection">SQL инъекция</option>
+                            <option value="brute_force">Брутфорс</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="target-node" class="form-label">Целевой узел (опционально):</label>
+                        <input type="text" class="form-control" id="target-node" placeholder="user_1, server_1, или оставьте пустым">
+                    </div>
+                    <button class="btn btn-danger" onclick="launchAttack()">
+                        <i class="fas fa-rocket"></i> Запустить атаку
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Визуализация сети -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-project-diagram"></i>
+                        Визуализация сети
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="network-visualization" style="height: 400px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <div class="text-center text-muted">
+                            <i class="fas fa-network-wired fa-3x mb-3"></i>
+                            <p>Сеть не создана. Создайте сеть для визуализации.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Детали узлов -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i>
+                        Детали узлов
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="nodes-table">
+                            <thead>
+                                <tr>
+                                    <th>ID узла</th>
+                                    <th>Тип</th>
+                                    <th>Статус</th>
+                                    <th>Безопасность</th>
+                                    <th>Уязвимости</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Данные будут загружены динамически -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie"></i>
+                        Статистика атак
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="attackStatsChart" width="300" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для детального просмотра узла -->
+<div class="modal fade" id="nodeDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle"></i>
+                    Детали узла
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="node-details-content">
+                <!-- Содержимое будет загружено динамически -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Инициализация графиков
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    loadNetworkData();
+});
+
+function initializeCharts() {
+    // График статистики атак
+    const attackStatsCtx = document.getElementById('attackStatsChart').getContext('2d');
+    new Chart(attackStatsCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Успешные', 'Неудачные', 'Блокированные'],
+            datasets: [{
+                data: [30, 45, 25],
+                backgroundColor: ['#dc3545', '#6c757d', '#28a745']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+function createNetwork() {
+    const size = 10; // По умолчанию
+    showLoading('Создаем сеть...');
+    
+    fetch('/api/create_network', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ num_nodes: size })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`Сеть создана с ${data.nodes_created} узлами`, 'success');
+            loadNetworkData();
+        } else {
+            showNotification(`Ошибка: ${data.error}`, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification(`Ошибка: ${error}`, 'error');
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
+function createCustomNetwork() {
+    const size = parseInt(document.getElementById('network-size').value) || 10;
+    showLoading('Создаем пользовательскую сеть...');
+    
+    fetch('/api/create_network', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ num_nodes: size })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`Пользовательская сеть создана с ${data.nodes_created} узлами`, 'success');
+            loadNetworkData();
+        } else {
+            showNotification(`Ошибка: ${data.error}`, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification(`Ошибка: ${error}`, 'error');
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
+function simulateAttack() {
+    const attackType = document.getElementById('attack-type').value;
+    const targetNode = document.getElementById('target-node').value;
+    
+    showLoading('Запускаем симуляцию атаки...');
+    
+    fetch('/api/simulate_attack', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+            attack_type: attackType,
+            target_node: targetNode || null
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(`Атака типа "${attackType}" выполнена`, 'success');
+            loadNetworkData();
+        } else {
+            showNotification(`Ошибка: ${data.error}`, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification(`Ошибка: ${error}`, 'error');
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
+function launchAttack() {
+    simulateAttack();
+}
+
+function loadNetworkData() {
+    // Имитация загрузки данных сети
+    setTimeout(() => {
+        updateNetworkStats();
+        updateNodesTable();
+        updateNetworkVisualization();
+    }, 500);
+}
+
+function updateNetworkStats() {
+    // Обновляем статистику
+    document.getElementById('total-nodes').textContent = Math.floor(Math.random() * 50) + 20;
+    document.getElementById('compromised-nodes').textContent = Math.floor(Math.random() * 10) + 2;
+    document.getElementById('network-integrity').textContent = (Math.random() * 30 + 70).toFixed(1) + '%';
+    document.getElementById('total-attacks').textContent = Math.floor(Math.random() * 100) + 50;
+}
+
+function updateNodesTable() {
+    const tbody = document.querySelector('#nodes-table tbody');
+    const nodeTypes = ['user', 'server', 'router', 'database'];
+    
+    // Генерируем тестовые данные
+    let html = '';
+    for (let i = 1; i <= 15; i++) {
+        const nodeType = nodeTypes[Math.floor(Math.random() * nodeTypes.length)];
+        const isCompromised = Math.random() > 0.7;
+        const securityScore = (Math.random() * 0.8 + 0.2).toFixed(2);
+        const vulnerabilities = Math.floor(Math.random() * 3);
+        
+        html += `
+            <tr>
+                <td><code>${nodeType}_${i}</code></td>
+                <td>
+                    <span class="badge bg-${nodeType === 'user' ? 'info' : nodeType === 'server' ? 'primary' : nodeType === 'router' ? 'warning' : 'secondary'}">
+                        ${nodeType}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge bg-${isCompromised ? 'danger' : 'success'}">
+                        ${isCompromised ? 'Скомпрометирован' : 'Безопасен'}
+                    </span>
+                </td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-${securityScore > 0.7 ? 'success' : securityScore > 0.4 ? 'warning' : 'danger'}" 
+                             style="width: ${securityScore * 100}%">
+                            ${(securityScore * 100).toFixed(0)}%
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-${vulnerabilities === 0 ? 'success' : vulnerabilities === 1 ? 'warning' : 'danger'}">
+                        ${vulnerabilities} уязвимостей
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info" onclick="showNodeDetails('${nodeType}_${i}')">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }
+    
+    tbody.innerHTML = html;
+}
+
+function updateNetworkVisualization() {
+    const container = document.getElementById('network-visualization');
+    container.innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-project-diagram fa-2x text-primary mb-3"></i>
+            <p class="text-muted">Сеть активна. Отображается ${document.getElementById('total-nodes').textContent} узлов.</p>
+        </div>
+    `;
+}
+
+function showNodeDetails(nodeId) {
+    // Показываем детали узла в модальном окне
+    const modal = new bootstrap.Modal(document.getElementById('nodeDetailsModal'));
+    const content = document.getElementById('node-details-content');
+    
+    content.innerHTML = `
+        <h6>Узел: ${nodeId}</h6>
+        <p><strong>Тип:</strong> ${nodeId.split('_')[0]}</p>
+        <p><strong>Статус:</strong> <span class="badge bg-success">Активен</span></p>
+        <p><strong>IP адрес:</strong> 192.168.1.${Math.floor(Math.random() * 254) + 1}</p>
+        <p><strong>MAC адрес:</strong> ${generateMacAddress()}</p>
+        <p><strong>Версия ОС:</strong> Ubuntu 20.04 LTS</p>
+        <p><strong>Последнее обновление:</strong> ${new Date().toLocaleDateString()}</p>
+        
+        <h6 class="mt-3">Уязвимости:</h6>
+        <ul>
+            <li>Открытый порт 22 (SSH)</li>
+            <li>Устаревшая версия OpenSSL</li>
+        </ul>
+        
+        <h6 class="mt-3">История атак:</h6>
+        <ul>
+            <li>${new Date(Date.now() - 86400000).toLocaleDateString()} - Попытка брутфорс атаки (блокирована)</li>
+            <li>${new Date(Date.now() - 172800000).toLocaleDateString()} - Сканирование портов (обнаружено)</li>
+        </ul>
+    `;
+    
+    modal.show();
+}
+
+function generateMacAddress() {
+    const hex = '0123456789ABCDEF';
+    let mac = '';
+    for (let i = 0; i < 6; i++) {
+        mac += hex[Math.floor(Math.random() * 16)] + hex[Math.floor(Math.random() * 16)];
+        if (i < 5) mac += ':';
+    }
+    return mac;
+}
+
+function refreshNetworkStats() {
+    showLoading('Обновляем статистику сети...');
+    
+    setTimeout(() => {
+        updateNetworkStats();
+        hideLoading();
+        showNotification('Статистика сети обновлена', 'success');
+    }, 1000);
+}
+</script>
+{% endblock %}

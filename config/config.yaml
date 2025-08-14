@@ -13,8 +13,8 @@ logging:
 attack:
   phishing:
     max_length: 1000
-    suspicious_keywords_file: "data/suspicious_keywords.txt"
-    email_templates_file: "data/email_templates.txt"
+    suspicious_keywords_file: "suspicious_keywords.txt"
+    email_templates_file: "email_templates.txt"
     generation_timeout: 30
   scanner:
     scan_interval: 60
@@ -25,7 +25,7 @@ defense:
   detector:
     confidence_threshold: 0.8
     model_path: "models/detector.pkl"
-    suspicious_patterns_file: "data/suspicious_patterns.txt"
+    suspicious_patterns_file: "suspicious_patterns.json"
   analyzer:
     analysis_depth: "deep"  # quick, standard, deep
     report_format: "json"   # json, html, pdf
