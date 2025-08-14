@@ -1,0 +1,55 @@
+# Конфігурація системи аналізу атак LLM
+system:
+  name: "LLM Attack Analysis System"
+  version: "1.0.0"
+  debug: true
+  log_level: "INFO"
+
+# Налаштування LLM провайдерів
+llm_providers:
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    model: "gpt-4"
+    max_tokens: 2000
+    temperature: 0.7
+  
+  anthropic:
+    api_key: "${ANTHROPIC_API_KEY}"
+    model: "claude-3-sonnet-20240229"
+    max_tokens: 2000
+
+# Налаштування мережі
+network:
+  scan_timeout: 30
+  max_hosts: 100
+  common_ports: [21, 22, 23, 25, 53, 80, 110, 143, 443, 993, 995, 3306, 5432, 6379, 8080]
+  scan_techniques: ["tcp_connect", "syn_scan", "udp_scan"]
+
+# Налаштування безпеки
+security:
+  max_attack_simulations: 10
+  rate_limit: 100
+  session_timeout: 3600
+  encryption_algorithm: "AES-256"
+
+# Налаштування логування
+logging:
+  file_path: "logs/system.log"
+  max_file_size: "10MB"
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# Налаштування веб-інтерфейсу
+web_interface:
+  host: "0.0.0.0"
+  port: 5000
+  secret_key: "${SECRET_KEY}"
+  session_lifetime: 3600
+  max_file_size: "16MB"
+
+# Налаштування симуляції
+simulation:
+  max_concurrent_attacks: 5
+  attack_duration: 300
+  recovery_time: 60
+  alert_threshold: 0.8
