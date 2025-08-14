@@ -1,0 +1,569 @@
+{% extends "base.html" %}
+
+{% block title %}Атаки - LLM Attack Simulation{% endblock %}
+
+{% block page_header %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h2 mb-2">
+            <i class="fas fa-bug me-2"></i>Генерация атак
+        </h1>
+        <p class="text-muted">Создание и настройка фишинговых атак через языковые модели</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Генератор атак -->
+<div class="row mb-4">
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-magic me-2"></i>Генератор фишинговых писем
+            </div>
+            <div class="card-body">
+                <form id="attackForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="prompt" class="form-label">Промпт для атаки</label>
+                            <input type="text" class="form-control" id="prompt" 
+                                   placeholder="Например: Reset your password" required>
+                            <div class="form-text">Опишите цель атаки</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="target" class="form-label">Целевая аудитория</label>
+                            <input type="email" class="form-control" id="target" 
+                                   placeholder="user@example.com" required>
+                            <div class="form-text">Email или идентификатор цели</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="urgency" class="form-label">Уровень срочности</label>
+                            <select class="form-select" id="urgency">
+                                <option value="low">Низкий</option>
+                                <option value="medium" selected>Средний</option>
+                                <option value="high">Высокий</option>
+                                <option value="extreme">Экстремальный</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="attackType" class="form-label">Тип атаки</label>
+                            <select class="form-select" id="attackType">
+                                <option value="phishing">Фишинг</option>
+                                <option value="social_engineering">Социальная инженерия</option>
+                                <option value="credential_harvesting">Сбор учетных данных</option>
+                                <option value="malware_distribution">Распространение вредоносного ПО</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="customKeywords" class="form-label">Дополнительные ключевые слова (опционально)</label>
+                        <textarea class="form-control" id="customKeywords" rows="2" 
+                                  placeholder="Введите дополнительные ключевые слова через запятую..."></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="button" class="btn btn-secondary me-md-2" onclick="resetForm()">
+                            <i class="fas fa-undo me-2"></i>Сбросить
+                        </button>
+                        <button type="submit" class="btn btn-danger" id="generateAttackBtn">
+                            <i class="fas fa-bug me-2"></i>Генерировать атаку
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle me-2"></i>Информация об атаках
+            </div>
+            <div class="card-body">
+                <h6>Уровни срочности:</h6>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-thermometer-empty text-success me-2"></i><strong>Низкий:</strong> Вежливые просьбы</li>
+                    <li><i class="fas fa-thermometer-half text-warning me-2"></i><strong>Средний:</strong> Умеренная настойчивость</li>
+                    <li><i class="fas fa-thermometer-three-quarters text-danger me-2"></i><strong>Высокий:</strong> Срочные действия</li>
+                    <li><i class="fas fa-thermometer-full text-danger me-2"></i><strong>Экстремальный:</strong> Критическая ситуация</li>
+                </ul>
+                
+                <hr>
+                
+                <h6>Типы атак:</h6>
+                <ul class="list-unstyled small">
+                    <li><i class="fas fa-envelope text-danger me-2"></i><strong>Фишинг:</strong> Поддельные письма</li>
+                    <li><i class="fas fa-users text-warning me-2"></i><strong>Социальная инженерия:</strong> Манипуляции</li>
+                    <li><i class="fas fa-key text-info me-2"></i><strong>Сбор данных:</strong> Учетные записи</li>
+                    <li><i class="fas fa-virus text-danger me-2"></i><strong>Вредоносное ПО:</strong> Заражение</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Результат генерации -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-envelope me-2"></i>Сгенерированное письмо
+                <button class="btn btn-sm btn-outline-secondary float-end" onclick="clearResult()">
+                    <i class="fas fa-trash me-1"></i>Очистить
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="generatedEmail">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-envelope fa-3x mb-3"></i>
+                        <p>Сгенерируйте атаку для просмотра результата</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Статистика атак -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-pie me-2"></i>Статистика генерации
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 text-center mb-3">
+                        <div class="h4 text-primary" id="totalGenerated">{{ stats.total_generated|default(0) }}</div>
+                        <small class="text-muted">Всего сгенерировано</small>
+                    </div>
+                    <div class="col-6 text-center mb-3">
+                        <div class="h4 text-success" id="successfulAttacks">{{ stats.successful_attacks|default(0) }}</div>
+                        <small class="text-muted">Успешных атак</small>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 text-center mb-3">
+                        <div class="h4 text-danger" id="failedAttacks">{{ stats.failed_attacks|default(0) }}</div>
+                        <small class="text-muted">Неудачных атак</small>
+                    </div>
+                    <div class="col-6 text-center mb-3">
+                        <div class="h4 text-info" id="avgLength">{{ stats.average_length|default(0) }}</div>
+                        <small class="text-muted">Средняя длина</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-bar me-2"></i>Распределение по типам
+            </div>
+            <div class="card-body">
+                <canvas id="attackTypesChart" width="300" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Подозрительные ключевые слова -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-exclamation-triangle me-2"></i>Подозрительные ключевые слова
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for keyword in keywords %}
+                    <div class="col-md-6 mb-2">
+                        <span class="badge bg-warning text-dark">{{ keyword }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        Показано {{ keywords|length }} из {{ stats.total_keywords|default(0) }} ключевых слов
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-file-alt me-2"></i>Шаблоны писем
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for template in templates %}
+                    <div class="list-group-item">
+                        <small class="text-muted">{{ template }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        Показано {{ templates|length }} из {{ stats.total_templates|default(0) }} шаблонов
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Дополнительные опции -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-cog me-2"></i>Дополнительные опции
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="enableLogging" checked>
+                            <label class="form-check-label" for="enableLogging">
+                                Логирование атак
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="enableValidation">
+                            <label class="form-check-label" for="enableValidation">
+                                Валидация результатов
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoSave">
+                            <label class="form-check-label" for="autoSave">
+                                Автосохранение
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <button type="button" class="btn btn-outline-primary me-md-2" onclick="exportAttacks()">
+                        <i class="fas fa-download me-2"></i>Экспорт атак
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" onclick="resetStats()">
+                        <i class="fas fa-redo me-2"></i>Сбросить статистику
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let attackTypesChart;
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    initializeChart();
+});
+
+function initializeChart() {
+    const ctx = document.getElementById('attackTypesChart').getContext('2d');
+    attackTypesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Фишинг', 'Социальная инженерия', 'Сбор данных', 'Вредоносное ПО'],
+            datasets: [{
+                data: [60, 20, 15, 5],
+                backgroundColor: [
+                    '#e74c3c',
+                    '#f39c12',
+                    '#3498db',
+                    '#9b59b6'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Обработка формы генерации атаки
+document.getElementById('attackForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    generateAttack();
+});
+
+function generateAttack() {
+    const formData = {
+        prompt: document.getElementById('prompt').value,
+        target: document.getElementById('target').value,
+        urgency: document.getElementById('urgency').value,
+        attack_type: document.getElementById('attackType').value,
+        custom_keywords: document.getElementById('customKeywords').value,
+        enable_logging: document.getElementById('enableLogging').checked,
+        enable_validation: document.getElementById('enableValidation').checked,
+        auto_save: document.getElementById('autoSave').checked
+    };
+    
+    // Показываем загрузку
+    const btn = document.getElementById('generateAttackBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Генерация...';
+    btn.disabled = true;
+    
+    // Генерируем атаку
+    fetch('/api/generate_phishing', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayGeneratedEmail(data.email);
+            updateStats(data.stats);
+            showNotification('Атака сгенерирована успешно!', 'success');
+            
+            if (formData.auto_save) {
+                saveAttack(data.email, formData);
+            }
+        } else {
+            showNotification('Ошибка при генерации атаки: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Ошибка при генерации атаки: ' + error, 'error');
+    })
+    .finally(() => {
+        // Восстанавливаем кнопку
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+function displayGeneratedEmail(email) {
+    const emailDiv = document.getElementById('generatedEmail');
+    
+    emailDiv.innerHTML = `
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Внимание:</strong> Это сгенерированное фишинговое письмо для тестирования
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">${email}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="copyToClipboard('${email.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-copy me-2"></i>Копировать
+                    </button>
+                    <button class="btn btn-outline-success" onclick="testDefense('${email.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-shield-alt me-2"></i>Тестировать защиту
+                    </button>
+                    <button class="btn btn-outline-info" onclick="analyzeEmail('${email.replace(/'/g, "\\'")}')">
+                        <i class="fas fa-search me-2"></i>Анализировать
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function updateStats(stats) {
+    document.getElementById('totalGenerated').textContent = stats.total_generated || 0;
+    document.getElementById('successfulAttacks').textContent = stats.successful_attacks || 0;
+    document.getElementById('failedAttacks').textContent = stats.failed_attacks || 0;
+    document.getElementById('avgLength').textContent = stats.average_length || 0;
+    
+    // Обновляем график
+    if (attackTypesChart) {
+        const total = stats.total_generated || 1;
+        const phishing = Math.floor(total * 0.6);
+        const social = Math.floor(total * 0.2);
+        const credential = Math.floor(total * 0.15);
+        const malware = Math.max(0, total - phishing - social - credential);
+        
+        attackTypesChart.data.datasets[0].data = [phishing, social, credential, malware];
+        attackTypesChart.update();
+    }
+}
+
+function resetForm() {
+    document.getElementById('attackForm').reset();
+    document.getElementById('urgency').value = 'medium';
+    document.getElementById('attackType').value = 'phishing';
+}
+
+function clearResult() {
+    document.getElementById('generatedEmail').innerHTML = `
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-envelope fa-3x mb-3"></i>
+            <p>Сгенерируйте атаку для просмотра результата</p>
+        </div>
+    `;
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        showNotification('Текст скопирован в буфер обмена', 'success');
+    }, function() {
+        showNotification('Ошибка при копировании', 'error');
+    });
+}
+
+function testDefense(email) {
+    fetch('/api/check_threat', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const result = data.is_threat ? 'УГРОЗА ОБНАРУЖЕНА' : 'Угроза не обнаружена';
+            const color = data.is_threat ? 'danger' : 'success';
+            showNotification(`${result} (уверенность: ${(data.confidence * 100).toFixed(1)}%)`, color);
+        } else {
+            showNotification('Ошибка при тестировании защиты: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Ошибка при тестировании защиты: ' + error, 'error');
+    });
+}
+
+function analyzeEmail(email) {
+    // Простой анализ письма
+    const analysis = {
+        length: email.length,
+        hasLinks: /https?:\/\/[^\s]+/.test(email),
+        hasUrgency: /\b(urgent|immediate|critical|asap|now)\b/i.test(email),
+        hasPersonalInfo: /\b(password|account|login|verify|confirm)\b/i.test(email),
+        suspiciousWords: (email.match(/\b(urgent|password|account|verify|click|link|secure|reset)\b/gi) || []).length
+    };
+    
+    let riskLevel = 'Низкий';
+    let riskColor = 'success';
+    
+    if (analysis.suspiciousWords > 3 || analysis.hasUrgency) {
+        riskLevel = 'Высокий';
+        riskColor = 'danger';
+    } else if (analysis.suspiciousWords > 1) {
+        riskLevel = 'Средний';
+        riskColor = 'warning';
+    }
+    
+    showNotification(`Анализ: ${riskLevel} риск (${analysis.suspiciousWords} подозрительных слов)`, riskColor);
+}
+
+function exportAttacks() {
+    // Экспорт статистики атак
+    const stats = {
+        total_generated: document.getElementById('totalGenerated').textContent,
+        successful_attacks: document.getElementById('successfulAttacks').textContent,
+        failed_attacks: document.getElementById('failedAttacks').textContent,
+        average_length: document.getElementById('avgLength').textContent,
+        export_time: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(stats, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `attack_stats_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+    link.click();
+    
+    showNotification('Статистика атак экспортирована', 'success');
+}
+
+function resetStats() {
+    if (confirm('Вы уверены, что хотите сбросить статистику атак?')) {
+        fetch('/api/reset_stats', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Статистика атак сброшена', 'success');
+                updateStats({
+                    total_generated: 0,
+                    successful_attacks: 0,
+                    failed_attacks: 0,
+                    average_length: 0
+                });
+            } else {
+                showNotification('Ошибка при сбросе статистики: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Ошибка при сбросе статистики: ' + error, 'error');
+        });
+    }
+}
+
+function saveAttack(email, config) {
+    const savedAttacks = JSON.parse(localStorage.getItem('savedAttacks') || '[]');
+    savedAttacks.push({
+        timestamp: new Date().toISOString(),
+        email: email,
+        config: config
+    });
+    
+    // Ограничиваем количество сохраненных атак
+    if (savedAttacks.length > 100) {
+        savedAttacks.splice(0, savedAttacks.length - 100);
+    }
+    
+    localStorage.setItem('savedAttacks', JSON.stringify(savedAttacks));
+}
+
+// Функция для обновления статистики на странице
+window.updatePageStats = function(stats) {
+    if (stats.attack) {
+        updateStats(stats.attack);
+    }
+};
+</script>
+{% endblock %}

@@ -1,0 +1,489 @@
+{% extends "base.html" %}
+
+{% block title %}Панель управления - LLM Attack Simulation{% endblock %}
+
+{% block page_header %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h2 mb-2">
+            <i class="fas fa-tachometer-alt me-2"></i>Панель управления
+        </h1>
+        <p class="text-muted">Обзор состояния системы и статистика в реальном времени</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Основная статистика -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <div class="stats-number" id="total-attacks">{{ attack_stats.total_generated|default(0) }}</div>
+                <div class="stats-label">Всего атак</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <div class="stats-number" id="threats-detected">{{ defense_stats.threats_detected|default(0) }}</div>
+                <div class="stats-label">Угроз обнаружено</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <div class="stats-number" id="network-nodes">{{ network_stats.total_nodes|default(0) }}</div>
+                <div class="stats-label">Узлов сети</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <div class="stats-number" id="network-integrity">{{ "%.1f"|format((network_stats.network_integrity|default(1.0)) * 100) }}%</div>
+                <div class="stats-label">Целостность сети</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Детальная статистика -->
+<div class="row mb-4">
+    <!-- Статистика атак -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-bug me-2"></i>Статистика атак
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-success rounded-circle p-2 me-3">
+                                <i class="fas fa-check text-white"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold" id="successful-attacks">{{ attack_stats.successful_attacks|default(0) }}</div>
+                                <small class="text-muted">Успешные</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-danger rounded-circle p-2 me-3">
+                                <i class="fas fa-times text-white"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold" id="failed-attacks">{{ attack_stats.failed_attacks|default(0) }}</div>
+                                <small class="text-muted">Неудачные</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress mb-3" style="height: 10px;">
+                    {% set success_rate = ((attack_stats.successful_attacks|default(0)) / (attack_stats.total_generated|default(1)) * 100) %}
+                    <div class="progress-bar bg-success" style="width: {{ success_rate }}%"></div>
+                </div>
+                <small class="text-muted">Процент успешности: {{ "%.1f"|format(success_rate) }}%</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Статистика защиты -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-shield-alt me-2"></i>Статистика защиты
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-primary rounded-circle p-2 me-3">
+                                <i class="fas fa-shield-alt text-white"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold" id="total-checks">{{ defense_stats.total_checks|default(0) }}</div>
+                                <small class="text-muted">Всего проверок</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-warning rounded-circle p-2 me-3">
+                                <i class="fas fa-exclamation-triangle text-white"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold" id="avg-confidence">{{ "%.2f"|format(defense_stats.average_confidence|default(0.0)) }}</div>
+                                <small class="text-muted">Средняя уверенность</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress mb-3" style="height: 10px;">
+                    {% set detection_rate = ((defense_stats.threats_detected|default(0)) / (defense_stats.total_checks|default(1)) * 100) %}
+                    <div class="progress-bar bg-warning" style="width: {{ detection_rate }}%"></div>
+                </div>
+                <small class="text-muted">Процент обнаружения: {{ "%.1f"|format(detection_rate) }}%</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Графики -->
+<div class="row mb-4">
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-line me-2"></i>Динамика атак и защиты
+            </div>
+            <div class="card-body">
+                <canvas id="attacksChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-pie me-2"></i>Распределение типов атак
+            </div>
+            <div class="card-body">
+                <canvas id="attackTypesChart" width="200" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Сетевая статистика -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-network-wired me-2"></i>Состояние сети
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center mb-3">
+                            <div class="h4 text-success" id="compromised-nodes">{{ network_stats.compromised_nodes|default(0) }}</div>
+                            <small class="text-muted">Скомпрометировано</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center mb-3">
+                            <div class="h4 text-primary" id="secure-nodes">{{ (network_stats.total_nodes|default(0)) - (network_stats.compromised_nodes|default(0)) }}</div>
+                            <small class="text-muted">Безопасно</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress mb-3" style="height: 10px;">
+                    {% set compromise_rate = ((network_stats.compromised_nodes|default(0)) / (network_stats.total_nodes|default(1)) * 100) %}
+                    <div class="progress-bar bg-danger" style="width: {{ compromise_rate }}%"></div>
+                </div>
+                <small class="text-muted">Процент компрометации: {{ "%.1f"|format(compromise_rate) }}%</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-bar me-2"></i>Типы узлов
+            </div>
+            <div class="card-body">
+                <canvas id="nodeTypesChart" width="300" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Быстрые действия -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-bolt me-2"></i>Быстрые действия
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-success w-100" onclick="runSimulation()">
+                            <i class="fas fa-play me-2"></i>Запустить симуляцию
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-primary w-100" onclick="createNetwork()">
+                            <i class="fas fa-network-wired me-2"></i>Создать сеть
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-warning w-100" onclick="resetStats()">
+                            <i class="fas fa-redo me-2"></i>Сбросить статистику
+                        </button>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <button class="btn btn-info w-100" onclick="refreshStats()">
+                            <i class="fas fa-sync-alt me-2"></i>Обновить данные
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Переменные для графиков
+let attacksChart, attackTypesChart, nodeTypesChart;
+
+// Инициализация графиков при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+});
+
+function initializeCharts() {
+    // График динамики атак и защиты
+    const attacksCtx = document.getElementById('attacksChart').getContext('2d');
+    attacksChart = new Chart(attacksCtx, {
+        type: 'line',
+        data: {
+            labels: ['1 мин', '2 мин', '3 мин', '4 мин', '5 мин'],
+            datasets: [{
+                label: 'Атаки',
+                data: [12, 19, 15, 25, 22],
+                borderColor: '#e74c3c',
+                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Обнаружения',
+                data: [8, 15, 12, 20, 18],
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // График типов атак
+    const attackTypesCtx = document.getElementById('attackTypesChart').getContext('2d');
+    attackTypesChart = new Chart(attackTypesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Фишинг', 'Брутфорс', 'Эксплойты', 'Социальная инженерия'],
+            datasets: [{
+                data: [45, 25, 20, 10],
+                backgroundColor: [
+                    '#e74c3c',
+                    '#f39c12',
+                    '#9b59b6',
+                    '#3498db'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20
+                    }
+                }
+            }
+        }
+    });
+
+    // График типов узлов
+    const nodeTypesCtx = document.getElementById('nodeTypesChart').getContext('2d');
+    nodeTypesChart = new Chart(nodeTypesCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Пользователи', 'Серверы', 'Маршрутизаторы', 'Брандмауэры'],
+            datasets: [{
+                label: 'Количество',
+                data: [30, 15, 8, 5],
+                backgroundColor: [
+                    '#3498db',
+                    '#e74c3c',
+                    '#f39c12',
+                    '#27ae60'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Функция для обновления статистики на странице
+window.updatePageStats = function(stats) {
+    // Обновляем основные показатели
+    if (stats.attack) {
+        document.getElementById('total-attacks').textContent = stats.attack.total_generated || 0;
+        document.getElementById('successful-attacks').textContent = stats.attack.successful_attacks || 0;
+        document.getElementById('failed-attacks').textContent = stats.attack.failed_attacks || 0;
+    }
+    
+    if (stats.defense) {
+        document.getElementById('threats-detected').textContent = stats.defense.threats_detected || 0;
+        document.getElementById('total-checks').textContent = stats.defense.total_checks || 0;
+        document.getElementById('avg-confidence').textContent = (stats.defense.average_confidence || 0).toFixed(2);
+    }
+    
+    if (stats.network) {
+        document.getElementById('network-nodes').textContent = stats.network.total_nodes || 0;
+        document.getElementById('compromised-nodes').textContent = stats.network.compromised_nodes || 0;
+        document.getElementById('secure-nodes').textContent = (stats.network.total_nodes || 0) - (stats.network.compromised_nodes || 0);
+        
+        const integrity = (stats.network.network_integrity || 1.0) * 100;
+        document.getElementById('network-integrity').textContent = integrity.toFixed(1) + '%';
+    }
+    
+    // Обновляем графики
+    updateCharts(stats);
+};
+
+function updateCharts(stats) {
+    // Обновляем график типов атак
+    if (stats.attack && attackTypesChart) {
+        const total = stats.attack.total_generated || 1;
+        const phishing = Math.floor((stats.attack.successful_attacks || 0) * 0.6);
+        const bruteForce = Math.floor((stats.attack.successful_attacks || 0) * 0.3);
+        const exploits = Math.floor((stats.attack.successful_attacks || 0) * 0.1);
+        const social = Math.max(0, total - phishing - bruteForce - exploits);
+        
+        attackTypesChart.data.datasets[0].data = [phishing, bruteForce, exploits, social];
+        attackTypesChart.update();
+    }
+    
+    // Обновляем график типов узлов
+    if (stats.network && nodeTypesChart) {
+        const total = stats.network.total_nodes || 0;
+        const users = Math.floor(total * 0.6);
+        const servers = Math.floor(total * 0.25);
+        const routers = Math.floor(total * 0.1);
+        const firewalls = Math.max(0, total - users - servers - routers);
+        
+        nodeTypesChart.data.datasets[0].data = [users, servers, routers, firewalls];
+        nodeTypesChart.update();
+    }
+}
+
+// Функции быстрых действий
+function runSimulation() {
+    showLoading('run-sim-btn');
+    
+    fetch('/api/run_simulation', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ num_attacks: 5 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('run-sim-btn');
+        if (data.success) {
+            showNotification('Симуляция запущена успешно!', 'success');
+            updateStats();
+        } else {
+            showNotification('Ошибка при запуске симуляции: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading('run-sim-btn');
+        showNotification('Ошибка при запуске симуляции: ' + error, 'error');
+    });
+}
+
+function createNetwork() {
+    showLoading('create-net-btn');
+    
+    fetch('/api/create_network', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ num_nodes: 20 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoading('create-net-btn');
+        if (data.success) {
+            showNotification(`Сеть создана успешно! Создано ${data.nodes_created} узлов.`, 'success');
+            updateStats();
+        } else {
+            showNotification('Ошибка при создании сети: ' + data.error, 'error');
+        }
+    })
+    .catch(error => {
+        hideLoading('create-net-btn');
+        showNotification('Ошибка при создании сети: ' + error, 'error');
+    });
+}
+
+function resetStats() {
+    if (confirm('Вы уверены, что хотите сбросить всю статистику?')) {
+        fetch('/api/reset_stats', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Статистика сброшена успешно!', 'success');
+                updateStats();
+            } else {
+                showNotification('Ошибка при сбросе статистики: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            showNotification('Ошибка при сбросе статистики: ' + error, 'error');
+        });
+    }
+}
+
+function refreshStats() {
+    updateStats();
+    showNotification('Статистика обновлена!', 'info');
+}
+</script>
+{% endblock %}
