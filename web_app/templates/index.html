@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Головна - LLM Attack Analysis System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-shield-alt me-2"></i>Ласкаво просимо до LLM Attack Analysis System</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4>Інтегрований системний аналіз адаптивних атак з застосуванням LLM</h4>
+                        <p class="lead">
+                            Система для моделювання, симуляції та аналізу кіберзагроз з використанням 
+                            штучного інтелекту та машинного навчання.
+                        </p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-bug text-danger me-2"></i>Генерація атак</h5>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Фішинг атаки</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Соціальна інженерія</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Збір облікових даних</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Розповсюдження шкідливого ПЗ</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-shield-alt text-primary me-2"></i>Аналіз захисту</h5>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-check text-success me-2"></i>Мережевий захист</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Endpoint захист</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Управління доступом</li>
+                                    <li><i class="fas fa-check text-success me-2"></i>Моніторинг безпеки</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h5><i class="fas fa-play-circle text-warning me-2"></i>Симуляція та тестування</h5>
+                            <p>
+                                Система дозволяє проводити реалістичні симуляції атак для тестування 
+                                ефективності заходів захисту та навчання персоналу.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-robot fa-3x text-primary mb-3"></i>
+                                <h5>LLM Інтеграція</h5>
+                                <p class="text-muted">
+                                    Підтримка OpenAI GPT та Anthropic Claude для 
+                                    генерації адаптивних сценаріїв атак
+                                </p>
+                                <div class="mt-3">
+                                    <span class="badge bg-success me-2">OpenAI GPT-4</span>
+                                    <span class="badge bg-info">Anthropic Claude</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card bg-light mt-3">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
+                                <h5>Реальний час</h5>
+                                <p class="text-muted">
+                                    Моніторинг та оновлення в реальному часі 
+                                    через WebSocket з'єднання
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-bug fa-2x text-danger mb-3"></i>
+                <h5>Генерація атак</h5>
+                <p>Створення реалістичних сценаріїв атак з використанням LLM</p>
+                <a href="{{ url_for('attack_page') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-right me-2"></i>Почати
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-shield-alt fa-2x text-primary mb-3"></i>
+                <h5>Аналіз захисту</h5>
+                <p>Оцінка ефективності заходів захисту та генерація рекомендацій</p>
+                <a href="{{ url_for('defense_page') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-right me-2"></i>Аналізувати
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="fas fa-play-circle fa-2x text-warning mb-3"></i>
+                <h5>Симуляція атак</h5>
+                <p>Проведення симуляцій для тестування захисту в безпечному середовищі</p>
+                <a href="{{ url_for('simulation_page') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-right me-2"></i>Запустити
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle me-2"></i>Інформація про систему</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Технології</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-code text-primary me-2"></i>Python 3.8+</li>
+                            <li><i class="fas fa-code text-primary me-2"></i>Flask Web Framework</li>
+                            <li><i class="fas fa-code text-primary me-2"></i>Socket.IO для реального часу</li>
+                            <li><i class="fas fa-code text-primary me-2"></i>Bootstrap 5 UI</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Безпека</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-lock text-success me-2"></i>Шифрування даних</li>
+                            <li><i class="fas fa-lock text-success me-2"></i>Безпечні API endpoints</li>
+                            <li><i class="fas fa-lock text-success me-2"></i>Логування всіх дій</li>
+                            <li><i class="fas fa-lock text-success me-2"></i>Валідація вхідних даних</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6>Призначення</h6>
+                    <p>
+                        Система призначена для аналітиків з безпеки, пентестерів та 
+                        спеціалістів з кібербезпеки для:
+                    </p>
+                    <ul>
+                        <li>Тестування заходів захисту корпоративних мереж</li>
+                        <li>Навчання персоналу реагуванню на інциденти</li>
+                        <li>Оцінки вразливостей та ризиків</li>
+                        <li>Розробки стратегій захисту</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>Важливо</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Увага!</strong> Ця система призначена тільки для етичного хакінгу та 
+                    тестування захисту в контрольованому середовищі. Використання для 
+                    реальних атак заборонено законом.
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Нагадування:</strong> Завжди отримуйте письмове дозвіл перед 
+                    проведенням тестування на проникнення в реальних системах.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Додаткова функціональність для головної сторінки
+    document.addEventListener('DOMContentLoaded', function() {
+        // Анімація карток при завантаженні
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100);
+            }, index * 100);
+        });
+        
+        // Інтерактивні елементи
+        const featureCards = document.querySelectorAll('.col-md-4 .card');
+        featureCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+    });
+</script>
+{% endblock %}

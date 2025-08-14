@@ -1,0 +1,9 @@
+2025-08-14 22:00:35,246 - llm_attack_system - INFO - Запуск веб-додатку на 0.0.0.0:5000
+2025-08-14 22:00:35,246 - llm_attack_system - INFO - Режим налагодження: False
+2025-08-14 22:00:55,645 - llm_attack_system - INFO - WebSocket підключення: hyZibcS3lkID2MQbAAAB
+2025-08-14 22:01:20,602 - llm_attack_system - ERROR - Помилка завантаження сторінки захисту: defense.html
+2025-08-14 22:01:20,654 - llm_attack_system - INFO - WebSocket відключення: hyZibcS3lkID2MQbAAAB
+2025-08-14 22:01:21,785 - llm_attack_system - INFO - WebSocket підключення: TZ4RIcZe3VYTbAynAAAD
+2025-08-14 22:01:27,142 - llm_attack_system - ERROR - Помилка завантаження dashboard: dashboard.html
+2025-08-14 22:01:27,184 - llm_attack_system - INFO - WebSocket відключення: TZ4RIcZe3VYTbAynAAAD
+2025-08-14 22:01:28,359 - llm_attack_system - INFO - WebSocket підключення: 9_BBAIQPtIZAbmHeAAAF
