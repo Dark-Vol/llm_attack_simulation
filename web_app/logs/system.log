@@ -7,3 +7,12 @@
 2025-08-14 22:01:27,142 - llm_attack_system - ERROR - Помилка завантаження dashboard: dashboard.html
 2025-08-14 22:01:27,184 - llm_attack_system - INFO - WebSocket відключення: TZ4RIcZe3VYTbAynAAAD
 2025-08-14 22:01:28,359 - llm_attack_system - INFO - WebSocket підключення: 9_BBAIQPtIZAbmHeAAAF
+2025-08-15 07:35:23,651 - llm_attack_system - INFO - Запуск веб-додатку на 0.0.0.0:5000
+2025-08-15 07:35:23,652 - llm_attack_system - INFO - Режим налагодження: False
+2025-08-15 07:35:43,360 - llm_attack_system - INFO - WebSocket підключення: VVvRkm_BqwM0UhlMAAAB
+2025-08-15 07:49:38,648 - llm_attack_system - INFO - Запуск веб-додатку на 0.0.0.0:5000
+2025-08-15 07:49:38,648 - llm_attack_system - INFO - Режим налагодження: False
+2025-08-15 07:51:15,583 - llm_attack_system - INFO - Запуск веб-додатку на 0.0.0.0:5000
+2025-08-15 07:51:15,583 - llm_attack_system - INFO - Режим налагодження: False
+2025-08-15 07:51:34,390 - llm_attack_system - INFO - WebSocket підключення: vgWgnUBFZQYCS6Q_AAAB
+2025-08-15 07:51:38,793 - llm_attack_system - INFO - WebSocket відключення: vgWgnUBFZQYCS6Q_AAAB

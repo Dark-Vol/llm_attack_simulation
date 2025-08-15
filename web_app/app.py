@@ -10,6 +10,7 @@ import time
 # Додавання шляху до модулів
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+
 from utils.config_manager import ConfigManager
 from utils.logger import logger
 from attack.llm_attack_generator import LLMAttackGenerator

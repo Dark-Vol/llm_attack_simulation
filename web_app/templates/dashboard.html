@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Панель керування LLM{% endblock %}
+{% block content %}
+<h2 class="mb-4">Панель керування LLM</h2>
+<form method="post" class="mb-3">
+    <div class="mb-3">
+        <label for="prompt" class="form-label">Ваш запит до LLM:</label>
+        <textarea class="form-control" id="prompt" name="prompt" rows="4" required>{{ prompt or '' }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Відправити</button>
+</form>
+{% if response %}
+<div class="card mt-4">
+    <div class="card-header">Відповідь LLM</div>
+    <div class="card-body">
+        <pre>{{ response }}</pre>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+<a class="nav-link {% if request.endpoint == 'logs_page' %}active{% endif %}" href="{{ url_for('logs_page') }}">
+    <i class="fas fa-list-alt"></i>Журнали
+</a>
+</nav>
+</div>
+
+<!-- Main Content -->
+<div class="col-md-10">
+    <div class="content p-4">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+</div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <span>&copy; 2023 LLM Attack Analysis System. All rights reserved.</span>
+    </div>
+</footer>
